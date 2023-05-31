@@ -4,8 +4,8 @@ int main() {
     FILE *file;
     int num, position = 1;
     
-    // Відкриття файлу для читання та запису
-    file = fopen("input.txt", "r+");
+    // Відкриття файлу для допису
+    file = fopen("input.txt", "a");
     if (file == NULL) {
         printf("Помилка відкриття файлу.");
         return 1;
@@ -15,14 +15,8 @@ int main() {
     while (fscanf(file, "%d", &num) == 1) {
         // Перевірка, чи число парне та чи його позиція непарна
         if (num % 2 == 0 && position % 2 != 0) {
-            // Зсув позиції назад та переміщення вказівника файлу на потрібну позицію
-            fseek(file, -sizeof(int), SEEK_CUR);
-            
             // Запис дубльованого числа
-            fprintf(file, "%d %d ", num, num);
-            
-            // Зсув позиції вперед
-            fseek(file, sizeof(int), SEEK_CUR);
+            fprintf(file, "%d ", num);
         }
         
         // Збільшення позиції

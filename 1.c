@@ -4,6 +4,13 @@ int main() {
     FILE *file;
     int num, position = 1;
     
+    // Відкриття файлу для читання
+    file = fopen("input.txt", "r");
+    if (file == NULL) {
+        printf("Помилка відкриття файлу.");
+        return 1;
+    }
+    
     // Відкриття файлу для допису
     file = fopen("input.txt", "a");
     if (file == NULL) {

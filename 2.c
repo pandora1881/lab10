@@ -1,38 +1,56 @@
 #include <stdio.h>
+#include <stdlib.h>
 
-int main() {
-    int array[] = {5, 8, 2, 1, 0, 4, 6, 3, 0, 9};
-    int length = sizeof(array) / sizeof(array[0]);
-    int count = 0;
-    int product = 1;
-    int first_zero_index = -1;
-    int second_zero_index = -1;
-
-    for (int i = 0; i < length; i++) {
-        if (array[i] < 7) {
-            count++;
-        }
-
-        if (array[i] == 0) {
-            if (first_zero_index == -1) {
-                first_zero_index = i;
-            } else if (second_zero_index == -1) {
-                second_zero_index = i;
+void copyData(const char* inputFile, const char* outputFile, int startPos, int numData) {
+    FILE* input = fopen(inputFile, "rb");
+    FILE* output = fopen(outputFile, "wb");
+    
+    if (input == NULL || output == NULL) {
+        printf("Помилка при відкритті файлів.\n");
+        return;
+    }
+    
+    // Переміщуємо покажчик читання в задану позицію
+    fseek(input, startPos * sizeof(int), SEEK_SET);
+    
+    // Зчитуємо дані, які будемо видаляти
+    int* removedData = (int*)malloc(numData * sizeof(int));
+    fread(removedData, sizeof(int), numData, input);
+    
+    // Переміщуємо покажчик читання на початок файлу
+    fseek(input, 0, SEEK_SET);
+    
+    // Копіюємо дані до нового файлу, пропускаючи видалені дані
+    int currentData;
+    while (fread(&currentData, sizeof(int), 1, input)) {
+        int found = 0;
+        for (int i = 0; i < numData; i++) {
+            if (currentData == removedData[i]) {
+                found = 1;
                 break;
             }
         }
-    }
-
-    if (first_zero_index != -1 && second_zero_index != -1) {
-        for (int i = first_zero_index + 1; i < second_zero_index; i++) {
-            product *= array[i];
+        
+        if (!found) {
+            fwrite(&currentData, sizeof(int), 1, output);
         }
-    } else {
-        product = 0;  // Якщо немає двох нулів, добуток буде 0
     }
+    
+    fclose(input);
+    fclose(output);
+    
+    free(removedData);
+}
 
-    printf("Кількість елементів масиву, менших за число сім: %d\n", count);
-    printf("Добуток елементів масиву, розташованих між першим і другим нульовими елементами: %d\n", product);
-
+int main() {
+    const char* inputFile = "input.bin";
+    const char* outputFile = "output.bin";
+    int startPos = 3;   // Початкова позиція, з якої видаляємо дані
+    int numData = 4;    // Кількість даних, які видаляємо
+    
+    copyData(inputFile, outputFile, startPos, numData);
+    
+    printf("Дані було успішно видалено та скопійовано до нового файлу.\n");
+    
     return 0;
 }

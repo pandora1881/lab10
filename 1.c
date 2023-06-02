@@ -1,38 +1,24 @@
 #include <stdio.h>
 
 int main() {
-    FILE *file;
-    int num, position = 1;
-    
-    // Відкриття файлу для читання
-    file = fopen("input.txt", "r");
+    FILE *file = fopen("input.txt", "r+");
     if (file == NULL) {
-        printf("Помилка відкриття файлу.");
+        printf("Помилка при відкритті файлу.");
         return 1;
     }
-    
-    // Відкриття файлу для допису
-    file = fopen("input.txt", "a");
-    if (file == NULL) {
-        printf("Помилка відкриття файлу.");
-        return 1;
-    }
-    
-    // Перебір чисел у файлі
-    while (fscanf(file, "%d", &num) == 1) {
-        // Перевірка, чи число парне та чи його позиція непарна
-        if (num % 2 == 0 && position % 2 != 0) {
-            // Запис дубльованого числа
-            fprintf(file, "%d ", num);
+
+    int number;
+    int position = 0;
+
+    while (fscanf(file, "%d", &number) == 1) {
+        if (position % 2 != 0 && number % 2 == 0) {
+            fprintf(file, "%d ", number);
         }
-        
-        // Збільшення позиції
+        fprintf(file, "%d ", number);
         position++;
     }
-    
-    // Закриття файлу
+
     fclose(file);
-    
-    printf("Процес дублювання завершено.");
+    printf("Операція завершена.");
     return 0;
 }

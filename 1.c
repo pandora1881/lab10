@@ -1,24 +1,38 @@
 #include <stdio.h>
 
 int main() {
-    FILE *file = fopen("input.txt", "r+");
-    if (file == NULL) {
-        printf("Помилка при відкритті файлу.");
+    FILE *inputFile, *outputFile;
+    int number;
+    int position = 1; // змінна, що відстежує поточну позицію числа
+
+    inputFile = fopen("input.txt", "r");
+    outputFile = fopen("output.txt", "w");
+
+    if (inputFile == NULL) {
+        printf("Помилка при відкритті вхідного файлу\n");
         return 1;
     }
 
-    int number;
-    int position = 0;
+    if (outputFile == NULL) {
+        printf("Помилка при відкритті вихідного файлу\n");
+        fclose(inputFile);
+        return 1;
+    }
 
-    while (fscanf(file, "%d", &number) == 1) {
-        if (position % 2 != 0 && number % 2 == 0) {
-            fprintf(file, "%d ", number);
+    while (fscanf(inputFile, "%d", &number) == 1) {
+        if (position % 2 == 1 && number % 2 == 0) {
+            fprintf(outputFile, "%d %d ", number, number);
+        } else {
+            fprintf(outputFile, "%d ", number);
         }
-        fprintf(file, "%d ", number);
+
         position++;
     }
 
-    fclose(file);
-    printf("Операція завершена.");
+    fclose(inputFile);
+    fclose(outputFile);
+
+    printf("Результати записані у файл output.txt\n");
+
     return 0;
 }

@@ -1,62 +1,96 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void moveData(const char* sourceFileName, const char* destinationFileName, int startPosition, int numData) {
-    FILE* sourceFile = fopen(sourceFileName, "rb");
-    FILE* destinationFile = fopen(destinationFileName, "wb");
+void removeAndInsertIntegers(const char* inputFileName, const char* outputFileName, int startPos, int numToRemove, int insertPos) {
+    FILE* inputFile = fopen(inputFileName, "rb");
+    if (inputFile == NULL) {
+        printf("Помилка відкриття вхідного файлу.\n");
+        return;
+    }
 
-    if (sourceFile == NULL || destinationFile == NULL) {
-        printf("Помилка відкриття файлу.\n");
+    FILE* outputFile = fopen(outputFileName, "wb");
+    if (outputFile == NULL) {
+        printf("Помилка відкриття вихідного файлу.\n");
+        fclose(inputFile);
         return;
     }
 
     // Отримуємо розмір файлу
-    fseek(sourceFile, 0, SEEK_END);
-    long fileSize = ftell(sourceFile);
-    fseek(sourceFile, 0, SEEK_SET);
+    fseek(inputFile, 0, SEEK_END);
+    long fileSize = ftell(inputFile);
+    fseek(inputFile, 0, SEEK_SET);
 
-    // Перевірка чи startPosition і numData є в межах розміру файлу
-    if (startPosition < 0 || startPosition >= fileSize || startPosition + numData > fileSize) {
-        printf("Помилкові параметри позиції або кількості даних.\n");
-        fclose(sourceFile);
-        fclose(destinationFile);
+    // Розмір одного цілого числа (припускаючи, що у файлі зберігаються лише цілі числа)
+    int intSize = sizeof(int);
+
+    // Перевірка чи є достатньо даних для видалення та вставки
+    if (startPos < 0 || startPos >= fileSize / intSize ||
+        insertPos < 0 || insertPos > fileSize / intSize ||
+        startPos + numToRemove > fileSize / intSize) {
+        printf("Некоректні параметри для видалення та вставки.\n");
+        fclose(inputFile);
+        fclose(outputFile);
         return;
     }
 
-    // Створюємо буфер для збереження даних
-    char* buffer = (char*)malloc(fileSize);
+    // Вираховуємо розмір нового файлу
+    long newFileSize = fileSize - (numToRemove * intSize) + (numToRemove * intSize);
 
-    // Зчитуємо дані з початку файлу до startPosition
-    fread(buffer, startPosition, 1, sourceFile);
-    fwrite(buffer, startPosition, 1, destinationFile);
+    // Виділяємо пам'ять для збереження даних
+    int* buffer = (int*)malloc(fileSize);
+    if (buffer == NULL) {
+        printf("Помилка виділення пам'яті.\n");
+        fclose(inputFile);
+        fclose(outputFile);
+        return;
+    }
 
-    // Зчитуємо дані, які потрібно видалити
-    fseek(sourceFile, startPosition + numData, SEEK_SET);
-    fread(buffer, fileSize - (startPosition + numData), 1, sourceFile);
-    fwrite(buffer, fileSize - (startPosition + numData), 1, destinationFile);
+    // Зчитуємо дані з вхідного файлу
+    fread(buffer, intSize, fileSize / intSize, inputFile);
+    fclose(inputFile);
 
-    // Переміщуємо позицію файлового вказівника до startPosition для запису вставлених даних
-    fseek(destinationFile, startPosition, SEEK_SET);
+    // Видаляємо задану кількість цілих чисел
+    int* newBuffer = (int*)malloc(newFileSize);
+    if (newBuffer == NULL) {
+        printf("Помилка виділення пам'яті.\n");
+        free(buffer);
+        fclose(outputFile);
+        return;
+    }
 
-    // Зчитуємо дані, які потрібно вставити
-    fseek(sourceFile, startPosition, SEEK_SET);
-    fread(buffer, numData, 1, sourceFile);
-    fwrite(buffer, numData, 1, destinationFile);
+    int i;
+    for (i = 0; i < startPos; i++) {
+        newBuffer[i] = buffer[i];
+    }
 
+    for (i = startPos + numToRemove; i < fileSize / intSize; i++) {
+        newBuffer[i - numToRemove] = buffer[i];
+    }
+
+    // Вставляємо видалені числа на нову позицію
+    for (i = 0; i < numToRemove; i++) {
+        newBuffer[insertPos + i] = buffer[startPos + i];
+    }
+
+    // Записуємо дані у вихідний файл
+    fwrite(newBuffer, intSize, newFileSize / intSize, outputFile);
+    fclose(outputFile);
+
+    // Звільняємо пам'ять
     free(buffer);
-    fclose(sourceFile);
-    fclose(destinationFile);
+    free(newBuffer);
+
+    printf("Операція успішно завершена.\n");
 }
 
 int main() {
-    const char* sourceFileName = "input.bin";
-    const char* destinationFileName = "output.bin";
-    int startPosition = 4;  // Позиція, з якої будуть видалені дані
-    int numData = 2;        // Кількість даних, які потрібно видалити та вставити
+    const char* inputFileName = "input.bin";
+    const char* outputFileName = "output.bin";
+    int startPos = 2;
+    int numToRemove = 3;
+    int insertPos = 5;
 
-    moveData(sourceFileName, destinationFileName, startPosition, numData);
-
-    printf("Операція завершена.\n");
+    removeAndInsertIntegers(inputFileName, outputFileName, startPos, numToRemove, insertPos);
 
     return 0;
 }
